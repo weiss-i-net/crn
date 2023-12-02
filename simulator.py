@@ -1,4 +1,5 @@
 from collections import namedtuple, Counter, defaultdict
+from tqdm import tqdm
 import random
 import math
 import re
@@ -45,29 +46,29 @@ def main():
                                   B + A -> B + U
                                   A + U -> A + A
                                   B + U -> B + B""")
-    num_simulations = 10
+    num_simulations = 100
     ns = range(0, 101, 2)
-    configs = [
-            lambda n: (n, 100-n, 0),
-            lambda n: (n//2, n//2, 0),
-            lambda n: (n//3, 2*n//3, 0),
-            lambda n: (n//3, n//3, n//3),
-            lambda n: (n, 20, 0),
-            lambda n: (1, 0, n-1),
-            ]
+    configs = [ lambda n: (n, 100-n, 0),
+                lambda n: (n//2, n//2, 0),
+                lambda n: (n//3, 2*n//3, 0),
+                lambda n: (n//3, n//3, n//3),
+                lambda n: (n, 20, 0),
+                lambda n: (1, 0, n-1) ]
 
     _, axes = plt.subplots(nrows=2, ncols=math.ceil(len(configs)/2), figsize=(10*math.ceil(len(configs)/2), 20))
     for ax, config in zip(axes.flatten(), configs):
-        description = inspect.getsource(config)
+        description = ", ".join([ re.findall(r"\(.*?\)", inspect.getsource(config))[0],
+                                  f"{ns.start}≤n≤{ns.stop-1}",
+                                  f"step={ns.step}",
+                                  f"{num_simulations} simulations" ])
+        print(description)
         dataset = [ [ run_simulation(crn, config(n)) for _ in range(num_simulations) ]
-                    for n in ns ]
+                    for n in tqdm(ns) ]
         ax.boxplot(dataset)
         ax.set(title=description, xlabel="n", xticks=range(1, len(ns)+1, 5), xticklabels=ns[::5], ylabel="time")
         ax.grid()
     plt.tight_layout()
-    #plt.show()
+    plt.show()
 
 if __name__ == "__main__":
     main()
-
-
